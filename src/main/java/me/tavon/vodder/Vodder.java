@@ -135,7 +135,7 @@ public class Vodder {
         TimerTask saveTask = new TimerTask() {
             @Override
             public void run() {
-                LOGGER.info("Saving data...");
+                LOGGER.fine("Saving data...");
                 for (Channel channel : channelMap.values()) {
                     try {
                         channel.saveLiveStreamsToFile(GSON);
