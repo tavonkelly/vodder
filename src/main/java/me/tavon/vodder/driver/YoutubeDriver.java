@@ -139,7 +139,7 @@ public class YoutubeDriver implements PlatformDriver {
 
         String body = URLDecoder.decode(getVideoInfo(liveStreamId), "UTF-8");
 
-        return Long.valueOf(body.split("lmt=")[1].split("&")[0]) / 1000L;
+        return Long.valueOf(body.split("lmt=")[1].split("&")[0].split(",")[0]) / 1000L;
 
 //        return System.currentTimeMillis(); // TODO Youtube is so trash
     }
