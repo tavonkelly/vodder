@@ -29,7 +29,11 @@ public class YoutubeDriver implements PlatformDriver {
 
     private YouTube youtube;
     private OkHttpClient client;
-    private static final String API_KEY = "AIzaSyABix56YSu77BHeLw88hmE8ZIwIR56x5Lc";
+    private static final String[] API_KEYS = new String[] {
+            "AIzaSyABix56YSu77BHeLw88hmE8ZIwIR56x5Lc", // vodder
+            "AIzaSyDueU0mfiy1MmylkhkvBd4mbTvKxNrI64I" // misc
+    };
+    private static int apiKeyIndex = 0;
 
     public YoutubeDriver(YouTube youtube, OkHttpClient client) {
         this.youtube = youtube;
@@ -90,7 +94,12 @@ public class YoutubeDriver implements PlatformDriver {
             throw new Exception("Could not create search", e);
         }
 
-        search.setKey(API_KEY);
+        search.setKey(API_KEYS[apiKeyIndex++]);
+
+        if (apiKeyIndex >= API_KEYS.length) {
+            apiKeyIndex = 0;
+        }
+
         search.setChannelId(channelId);
         search.setEventType("live");
         search.setMaxResults(25L);
@@ -148,7 +157,10 @@ public class YoutubeDriver implements PlatformDriver {
     public String getStreamTitle(String channelId, String liveStreamId) throws Exception {
         YouTube.Videos.List videosListByIdRequest = youtube.videos().list("snippet");
 
-        videosListByIdRequest.setKey(API_KEY);
+        videosListByIdRequest.setKey(API_KEYS[apiKeyIndex++]);
+        if (apiKeyIndex >= API_KEYS.length) {
+            apiKeyIndex = 0;
+        }
         videosListByIdRequest.setId(liveStreamId);
 
         VideoListResponse response = videosListByIdRequest.execute();
@@ -164,7 +176,10 @@ public class YoutubeDriver implements PlatformDriver {
     public String getChannelDisplayName(String channelId) throws Exception {
         YouTube.Channels.List channelsListByIdRequest = youtube.channels().list("snippet");
 
-        channelsListByIdRequest.setKey(API_KEY);
+        channelsListByIdRequest.setKey(API_KEYS[apiKeyIndex++]);
+        if (apiKeyIndex >= API_KEYS.length) {
+            apiKeyIndex = 0;
+        }
         channelsListByIdRequest.setId(channelId);
 
         ChannelListResponse response = channelsListByIdRequest.execute();
