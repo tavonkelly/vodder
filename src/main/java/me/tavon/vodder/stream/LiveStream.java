@@ -86,6 +86,7 @@ public class LiveStream {
         return getLiveStreamLength(this.segments.get(this.segments.size() - 1).getIndex());
     }
 
+    // TODO This will break if segments are out of order
     public double getLiveStreamLength(int maxSeq) {
         double totalLength = 0D;
         Segment lastSegment = null;

@@ -100,6 +100,7 @@ public class ChatEncoder {
                 long totalLength = 0L;
                 Segment lastSegment = null;
 
+                // TODO This will break if segments are out of order
                 for (Segment segment : this.liveStream.getSegments()) {
                     if (lastSegment == null && segment.getIndex() != 0) {
                         totalLength += (segment.getLength() * 1000L) * segment.getIndex();
