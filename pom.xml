@@ -73,11 +73,11 @@
             <artifactId>batik-codec</artifactId>
             <version>1.9</version>
         </dependency>
-        <dependency>
-            <groupId>xuggle</groupId>
-            <artifactId>xuggle-xuggler</artifactId>
-            <version>5.4</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>xuggle</groupId>-->
+            <!--<artifactId>xuggle-xuggler</artifactId>-->
+            <!--<version>5.4</version>-->
+        <!--</dependency>-->
     </dependencies>
 
     <build>
@@ -92,14 +92,14 @@
                     <include>**/*</include>
                 </includes>
             </resource>
-            <resource>
-                <filtering>true</filtering>
-                <directory>src/main/java</directory>
-                <includes>
-                    <include>*.java</include>
-                    <include>**/*.java</include>
-                </includes>
-            </resource>
+            <!--<resource>-->
+                <!--<filtering>true</filtering>-->
+                <!--<directory>src/main/java</directory>-->
+                <!--<includes>-->
+                    <!--<include>*.java</include>-->
+                    <!--<include>**/*.java</include>-->
+                <!--</includes>-->
+            <!--</resource>-->
         </resources>
         <plugins>
             <plugin>

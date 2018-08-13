@@ -46,7 +46,13 @@ public class UploadChannel {
         Video video = new Video();
 
         VideoStatus status = new VideoStatus();
-        status.setPrivacyStatus("public");
+
+        if (channel.shouldPublish()) {
+            status.setPrivacyStatus("public");
+        } else {
+            status.setPrivacyStatus("unlisted");
+        }
+
         video.setStatus(status);
 
         VideoSnippet snippet = new VideoSnippet();
@@ -92,7 +98,7 @@ public class UploadChannel {
                     System.out.println("Upload in progress");
 //                    System.out.println("getNumBytesUploaded " + listener.getNumBytesUploaded());
 //                    System.out.println("file.length " + file.length());
-                    System.out.println("Upload percentage: " + ((Math.round((double) listener.getNumBytesUploaded() / (double) file.length()) * 10000D) / 100D) + "%");
+                    System.out.println("Upload percentage: " + Math.round(((double) listener.getNumBytesUploaded() / (double) file.length()) * 100D) + "%");
                     break;
                 case MEDIA_COMPLETE:
                     System.out.println("Upload Completed!");

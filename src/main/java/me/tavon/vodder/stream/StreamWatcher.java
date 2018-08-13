@@ -245,22 +245,6 @@ public class StreamWatcher implements Runnable {
                     threadPool = currSegThreadPool;
                 }
 
-
-                // TODO This the test one
-//                Segment segment = new Segment(currSeq, trackData.getTrackInfo().duration);
-//
-//                segment.setQueued(true);
-//                liveStream.getSegments().add(segment);
-//
-//                ExecutorService threadPool;
-//
-//                if (liveStream.getStartTime() + lengthSoFar <= System.currentTimeMillis() - PAST_SEG_THRESHOLD) {
-//                    currSeq++;
-//                    continue;
-//                } else {
-//                    threadPool = currSegThreadPool;
-//                }
-
                 String uri = trackData.getUri();
 
                 if (!uri.startsWith("https:") && !uri.startsWith("http:")) { // Handle relative urls

@@ -15,16 +15,18 @@ public class Channel {
 
     private final String channelId;
     private final Platform platform;
+    private final boolean publish;
     private transient PlatformDriver platformDriver;
     private transient PlatformChatDriver platformChatDriver;
     private transient List<LiveStream> liveStreams;
 
-    public Channel(String channelId, Platform platform, PlatformDriver platformDriver) {
+    public Channel(String channelId, Platform platform, boolean publish, PlatformDriver platformDriver) {
         Objects.requireNonNull(channelId, "channelId cannot be null");
         Objects.requireNonNull(platform, "platform cannot be null");
         Objects.requireNonNull(platformDriver, "platformDriver cannot be null");
         this.channelId = channelId;
         this.platform = platform;
+        this.publish = publish;
         this.platformDriver = platformDriver;
         this.liveStreams = new LinkedList<>();
     }
@@ -35,6 +37,10 @@ public class Channel {
 
     public Platform getPlatform() {
         return platform;
+    }
+
+    public boolean shouldPublish() {
+        return publish;
     }
 
     public PlatformDriver getPlatformDriver() {
