@@ -24,7 +24,7 @@ public class UploadJob {
     private LiveStream liveStream;
     private JobCallback jobCallback;
 
-    private static final long MAX_PART_LENGTH_S = TimeUnit.HOURS.toSeconds(1);
+    private static final long MAX_PART_LENGTH_S = TimeUnit.HOURS.toSeconds(5);
 
     public UploadJob(Channel channel, LiveStream liveStream, JobCallback jobCallback) {
         this.channel = channel;
@@ -85,7 +85,7 @@ public class UploadJob {
         cal.setTimeZone(TimeZone.getTimeZone("PST"));
         cal.setTime(date);
 
-        snippet.setTitle(displayPart ? ("PART " + (index + 1) + ": ") : "" + this.getMajorTitle(liveStream) + " ["
+        snippet.setTitle((displayPart ? ("PART " + (index + 1) + ": ") : "") + this.getMajorTitle(liveStream) + " ["
                 + (cal.get(Calendar.MONTH) + 1) + "/" + cal.get(Calendar.DAY_OF_MONTH)
                 + "/" + cal.get(Calendar.YEAR) + "]");
         snippet.setDescription("(Automatic upload)\n\n" +
@@ -160,7 +160,7 @@ public class UploadJob {
             while (!segFiles.isEmpty()) {
                 Map.Entry<String, Segment> entry = segFiles.remove(0);
 
-                if (partLength + entry.getValue().getLength() >= MAX_PART_LENGTH_S) {
+                if (partLength + entry.getValue().getLength() > MAX_PART_LENGTH_S) {
                     currPart++;
                     partLength = 0;
 
