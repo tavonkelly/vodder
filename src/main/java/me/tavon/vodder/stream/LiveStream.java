@@ -4,7 +4,6 @@ import me.tavon.vodder.Vodder;
 import me.tavon.vodder.driver.chat.PlatformChatDriver;
 import me.tavon.vodder.stream.chat.ChatIngest;
 
-import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -34,10 +33,6 @@ public class LiveStream {
         this.chatIngest = new ChatIngest();
     }
 
-    public String getChannelId() {
-        return channelId;
-    }
-
     public String getLiveStreamId() {
         return liveStreamId;
     }
@@ -47,7 +42,7 @@ public class LiveStream {
     }
 
     public Title getCurrentTitle() {
-        return liveStreamTitles.toArray(new Title[liveStreamTitles.size()])[liveStreamTitles.size() - 1];
+        return liveStreamTitles.toArray(new Title[0])[liveStreamTitles.size() - 1];
     }
 
     public void addNewLiveStreamTitle(Title title) {
@@ -75,7 +70,11 @@ public class LiveStream {
     }
 
     public List<Segment> getSegments() {
-        return segments;
+        return Collections.unmodifiableList(segments);
+    }
+
+    public void addSegment(Segment segment) {
+        segments.add(segment);
     }
 
     public double getLiveStreamLength() {
@@ -153,65 +152,6 @@ public class LiveStream {
 
     public void setUploaded(boolean uploaded) {
         this.uploaded = uploaded;
-    }
-
-    public void combineSegments(File destination, boolean deleteSegments) throws Exception {
-        segmentsLock.lock();
-
-        try {
-            List<String> segFiles = new LinkedList<>();
-
-            for (Segment segment : this.segments) {
-                File segFolder = new File(getFileDirectory());
-                File segFile = new File(segFolder, segment.getIndex() + ".ts");
-
-                if (segFile.exists()) {
-                    segFiles.add(segFile.getAbsolutePath());
-                } else if (segment.isDownloaded()) {
-                    throw new Exception("could not find segment file for segment " + segment.getIndex());
-                }
-            }
-
-            segFiles.sort((item1, item2) -> {
-                String[] parts = item1.split("/");
-                int item1Int = Integer.parseInt(parts[parts.length - 1].replace(".ts", ""));
-                parts = item2.split("/");
-                int item2Int = Integer.parseInt(parts[parts.length - 1].replace(".ts", ""));
-
-                return item1Int - item2Int;
-            });
-
-            try {
-                destination.createNewFile();
-            } catch (IOException e) {
-                throw new Exception("could not create destination file", e);
-            }
-
-            try (OutputStream out = new FileOutputStream(destination)) {
-                byte[] buf = new byte[1000000];
-
-                for (String file : segFiles) {
-                    try (InputStream in = new FileInputStream(file)) {
-                        int b;
-                        while ((b = in.read(buf)) >= 0) {
-                            out.write(buf, 0, b);
-                            out.flush();
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                throw new Exception("could not write data to destination file", e);
-            }
-
-            if (deleteSegments) {
-                for (String s : segFiles) {
-                    new File(s).delete();
-                }
-                segments.clear();
-            }
-        } finally {
-            segmentsLock.unlock();
-        }
     }
 
     public String getFileDirectory() throws Exception {

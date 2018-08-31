@@ -1,12 +1,10 @@
 package me.tavon.vodder.channel;
 
+import com.google.api.services.youtube.model.Video;
 import me.tavon.vodder.Vodder;
 import me.tavon.vodder.stream.LiveStream;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,7 +14,7 @@ public class UploadWatcher implements Runnable {
 
     private Map<String, Long> uploadReadyTimeoutMap = new HashMap<>();
     private ExecutorService uploadThreadPool = Executors.newFixedThreadPool(3);
-    private Set<String> currentlyUploading = new CopyOnWriteArraySet<>();
+    private Set<String> activeChannels = new CopyOnWriteArraySet<>();
 
     private static final long UPLOAD_READY_WAIT = TimeUnit.MINUTES.toMillis(20);
 
@@ -29,12 +27,12 @@ public class UploadWatcher implements Runnable {
     public void run() {
         while (true) {
             for (Channel channel : Vodder.INSTANCE.getChannels()) {
+                if (activeChannels.contains(channel.getChannelId())) {
+                    continue;
+                }
+
                 for (LiveStream liveStream : channel.getLiveStreams()) {
                     if (liveStream.isUploaded()) {
-                        continue;
-                    }
-
-                    if (currentlyUploading.contains(liveStream.getLiveStreamId())) {
                         continue;
                     }
 
@@ -53,44 +51,47 @@ public class UploadWatcher implements Runnable {
                     }
 
                     uploadReadyTimeoutMap.remove(liveStream.getLiveStreamId());
+                    activeChannels.add(channel.getChannelId());
 
-                    File liveStreamDir = new File(channel.getChannelDirectory()
-                            + liveStream.getLiveStreamId() + "/" + liveStream.getLiveStreamId() + ".ts");
-                    File secondaryDir = new File(channel.getChannelDirectory()
-                            + liveStream.getLiveStreamId() + "/" + liveStream.getLiveStreamId() + ".mp4");
-
-                    if (!liveStreamDir.exists() && !secondaryDir.exists()) {
-                        try {
-                            liveStream.combineSegments(liveStreamDir, false);
-                        } catch (Exception e) {
-                            try {
-                                throw new Exception("Could not upload livestream " + liveStream.getLiveStreamId(), e);
-                            } catch (Exception e1) {
-                                e1.printStackTrace();
-                            }
-                            continue;
-                        }
-                    }
-
-                    if (!liveStreamDir.exists() && secondaryDir.exists()) {
-                        liveStreamDir = secondaryDir;
-                    }
-
-                    currentlyUploading.add(liveStream.getLiveStreamId());
-
-                    File finalLiveStreamDir = liveStreamDir;
                     uploadThreadPool.submit(() -> {
-                        try {
-                            UploadChannel.getUploadChannel(channel).uploadVideo(finalLiveStreamDir, channel, liveStream);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return;
-                        } finally {
-                            currentlyUploading.remove(liveStream.getLiveStreamId());
-                        }
+                        UploadJob uploadJob = new UploadJob(channel, liveStream, new UploadJob.JobCallback() {
+                            @Override
+                            public void onProgress(int partIndex, double progress) {
+                                System.out.println(liveStream.getLiveStreamId() + " partIndex: " + partIndex
+                                        + " Progress: " + (Math.round(progress * 10000D) / 100D) + "%");
+                            }
 
-                        liveStream.setUploaded(true);
-                        liveStream.setReadyForUpload(false);
+                            @Override
+                            public void onPartFinish(int partIndex, Video video) {
+                                System.out.println("---------------------------------------");
+                                System.out.println(liveStream.getLiveStreamId() + " partIndex: " + partIndex
+                                        + " finished uploading. Video Id: " + video.getId());
+                                System.out.println("---------------------------------------");
+                            }
+
+                            @Override
+                            public void onFinish(List<Video> videos) {
+                                System.out.println("---------------------------------------");
+                                System.out.println(liveStream.getLiveStreamId() + " finished uploading. Video Ids: ");
+                                for (Video video : videos) {
+                                    System.out.println("     - " + video.getId());
+                                }
+                                System.out.println("---------------------------------------");
+
+                                activeChannels.remove(channel.getChannelId());
+                                liveStream.setUploaded(true);
+                                liveStream.setReadyForUpload(false);
+                            }
+
+                            @Override
+                            public void onException(Exception e) {
+                                e.printStackTrace();
+
+                                activeChannels.remove(channel.getChannelId());
+                            }
+                        });
+
+                        uploadJob.start();
                     });
                 }
             }

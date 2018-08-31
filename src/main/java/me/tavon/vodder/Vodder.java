@@ -6,7 +6,7 @@ import com.google.api.services.youtube.YouTube;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import me.tavon.vodder.channel.Channel;
-import me.tavon.vodder.channel.UploadChannel;
+import me.tavon.vodder.channel.UploadCredential;
 import me.tavon.vodder.channel.UploadWatcher;
 import me.tavon.vodder.driver.LiveMeDriver;
 import me.tavon.vodder.driver.TwitchDriver;
@@ -16,7 +16,6 @@ import me.tavon.vodder.driver.chat.emote.EmoteRegistry;
 import me.tavon.vodder.driver.chat.emote.FrankerFaceZEmoteRegistry;
 import me.tavon.vodder.driver.chat.emote.TwitchEmoteRegistry;
 import me.tavon.vodder.driver.chat.YoutubeChatDriver;
-import me.tavon.vodder.encoding.ChatEncoder;
 import me.tavon.vodder.stream.LiveStream;
 import me.tavon.vodder.stream.Segment;
 import me.tavon.vodder.stream.StreamWatcher;
@@ -107,7 +106,7 @@ public class Vodder {
                 channel.loadLiveStreamsFromFile();
                 channelMap.put(channel.getChannelId(), channel);
 
-                UploadChannel.getUploadChannel(channel);
+                UploadCredential.getUploadCredential(channel);
             } catch (Exception e) {
                 e.printStackTrace();
             }

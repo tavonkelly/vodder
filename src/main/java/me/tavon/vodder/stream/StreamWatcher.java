@@ -235,7 +235,7 @@ public class StreamWatcher implements Runnable {
                 Segment segment = new Segment(currSeq, trackData.getTrackInfo().duration);
 
                 segment.setQueued(true);
-                liveStream.getSegments().add(segment);
+                liveStream.addSegment(segment);
 
                 ExecutorService threadPool;
 

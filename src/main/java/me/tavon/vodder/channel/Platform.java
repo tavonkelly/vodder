@@ -27,7 +27,7 @@ public enum Platform {
                 return String.format(this.urlFormat, channel.getPlatformDriver()
                         .getChannelDisplayName(channel.getChannelId()));
             default:
-                throw new Exception("unknown platform " + this.name());
+                return "";
         }
     }
 }
