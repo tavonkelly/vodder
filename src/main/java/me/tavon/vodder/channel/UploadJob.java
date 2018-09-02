@@ -24,7 +24,7 @@ public class UploadJob {
     private LiveStream liveStream;
     private JobCallback jobCallback;
 
-    private static final long MAX_PART_LENGTH_S = TimeUnit.HOURS.toSeconds(5);
+    private static final long MAX_PART_LENGTH_S = TimeUnit.HOURS.toSeconds(10);
 
     public UploadJob(Channel channel, LiveStream liveStream, JobCallback jobCallback) {
         this.channel = channel;
