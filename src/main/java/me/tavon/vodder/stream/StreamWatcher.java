@@ -210,11 +210,6 @@ public class StreamWatcher implements Runnable {
         PlaylistParser parser = new PlaylistParser(responseBody.byteStream(), Format.EXT_M3U, Encoding.UTF_8, ParsingMode.LENIENT);
         Playlist playlist = parser.parse();
 
-        if (!playlist.getMediaPlaylist().isOngoing()) {
-            liveStream.setActive(false, channel.getPlatformChatDriver());
-            Vodder.LOGGER.info("Livestream " + liveStream.getLiveStreamId() + " is no longer active");
-        }
-
         response.close();
 
         int currSeq = playlist.getMediaPlaylist().getMediaSequenceNumber();
