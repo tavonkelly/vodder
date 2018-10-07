@@ -55,7 +55,8 @@ public class UploadJob {
         List<Video> completedUploads = new LinkedList<>();
 
         for (int i = 0; i < partFiles.size(); i++) {
-            Video video = this.uploadPart(i, partFiles.get(i), youtube, partFiles.size() > 1);;
+            Video video = this.uploadPart(i, partFiles.get(i), youtube, partFiles.size() > 1);
+            ;
 
             completedUploads.add(video);
         }

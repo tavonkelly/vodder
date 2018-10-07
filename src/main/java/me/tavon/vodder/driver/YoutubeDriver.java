@@ -29,7 +29,7 @@ public class YoutubeDriver implements PlatformDriver {
 
     private YouTube youtube;
     private OkHttpClient client;
-    private static final String[] API_KEYS = new String[] {
+    private static final String[] API_KEYS = new String[]{
             "AIzaSyABix56YSu77BHeLw88hmE8ZIwIR56x5Lc", // vodder
             "AIzaSyDueU0mfiy1MmylkhkvBd4mbTvKxNrI64I" // misc
     };

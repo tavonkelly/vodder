@@ -90,7 +90,8 @@ public class ChatEncoder {
             // The process output stream hangs if you don't read from the error stream. no idea why
             new Thread(() -> {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                    while (reader.readLine() != null) {}
+                    while (reader.readLine() != null) {
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

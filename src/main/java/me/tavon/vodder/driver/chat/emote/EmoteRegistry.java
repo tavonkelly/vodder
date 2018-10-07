@@ -7,7 +7,6 @@ import okhttp3.OkHttpClient;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +43,8 @@ public abstract class EmoteRegistry {
         }
 
         try (FileReader reader = new FileReader(file)) {
-            Type mapType = new TypeToken<Map<String, String>>(){}.getType();
+            Type mapType = new TypeToken<Map<String, String>>() {
+            }.getType();
             emoteMap = Vodder.GSON.fromJson(reader, mapType);
         }
     }
