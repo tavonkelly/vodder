@@ -34,6 +34,7 @@ public class YoutubeDriver implements PlatformDriver {
             "AIzaSyDueU0mfiy1MmylkhkvBd4mbTvKxNrI64I" // misc
     };
     private static int apiKeyIndex = 0;
+    private static String PLAYLIST_KEY = "hlsvp";
 
     public YoutubeDriver(YouTube youtube, OkHttpClient client) {
         this.youtube = youtube;
@@ -46,7 +47,7 @@ public class YoutubeDriver implements PlatformDriver {
         String body = getVideoInfo(streamId);
 
         for (String s : body.split("&")) {
-            if (s.startsWith("hlsvp")) {
+            if (s.startsWith(PLAYLIST_KEY)) {
                 try {
                     masterUrl = URLDecoder.decode(s.split("=")[1], "UTF-8");
                 } catch (UnsupportedEncodingException e) {
@@ -124,7 +125,14 @@ public class YoutubeDriver implements PlatformDriver {
         Set<String> ids = new HashSet<>();
 
         for (SearchResult searchResult : searchResultList) {
-            ids.add(searchResult.getId().getVideoId());
+            String videoId = searchResult.getId().getVideoId();
+            String videoInfo = getVideoInfo(videoId);
+
+            if (!videoInfo.contains(PLAYLIST_KEY)) {
+                continue;
+            }
+
+            ids.add(videoId);
         }
 
         return ids;
