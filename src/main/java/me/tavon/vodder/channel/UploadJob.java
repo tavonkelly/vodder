@@ -92,7 +92,7 @@ public class UploadJob {
                 this.channel.getPlatformDriver().getChannelDisplayName(this.channel.getChannelId()) + " live on "
                 + this.channel.getPlatform().getDisplayName() + ": "
                 + String.format(this.channel.getPlatform().getUrl(this.channel), this.channel.getChannelId()) + "\n"
-                + "Stream started at " + dateFormat.format(date) + " (" + date.getTime() + ")");
+                + "Stream started at " + dateFormat.format(date) + " (" + date.getTime() + ") (" + this.liveStream.getLiveStreamId() + ")");
 
         snippet.setTags(Arrays.asList("vodder", this.channel.getPlatform().getDisplayName()
                 , this.channel.getPlatformDriver().getChannelDisplayName(this.channel.getChannelId())
