@@ -37,29 +37,30 @@ public class TwitchEmoteRegistry extends EmoteRegistry {
                 .addHeader("Accept", "application/vnd.twitchtv.v5+json")
                 .build();
 
-        Response response = client.newCall(request).execute();
-        ResponseBody responseBody = response.body();
+        try (Response response = client.newCall(request).execute()) {
+            ResponseBody responseBody = response.body();
 
-        if (response.code() != 200 || responseBody == null) {
-            throw new Exception("got non-200 or empty body");
-        }
-
-        Map<String, String> emoteMap = new HashMap<>();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream()))) {
-            JsonElement element = new JsonParser().parse(reader);
-            JsonObject object = element.getAsJsonObject();
-            JsonArray emoteArr = object.getAsJsonArray("emoticons");
-
-            for (int i = 0; i < emoteArr.size(); i++) {
-                JsonObject emoteObj = emoteArr.get(i).getAsJsonObject();
-
-                emoteMap.put(" " + emoteObj.get("regex").getAsString() + " "
-                        , emoteObj.getAsJsonArray("images")
-                                .get(0).getAsJsonObject().get("url").getAsString());
+            if (response.code() != 200 || responseBody == null) {
+                throw new Exception("got non-200 or empty body");
             }
-        }
 
-        return emoteMap;
+            Map<String, String> emoteMap = new HashMap<>();
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream()))) {
+                JsonElement element = new JsonParser().parse(reader);
+                JsonObject object = element.getAsJsonObject();
+                JsonArray emoteArr = object.getAsJsonArray("emoticons");
+
+                for (int i = 0; i < emoteArr.size(); i++) {
+                    JsonObject emoteObj = emoteArr.get(i).getAsJsonObject();
+
+                    emoteMap.put(" " + emoteObj.get("regex").getAsString() + " "
+                            , emoteObj.getAsJsonArray("images")
+                                    .get(0).getAsJsonObject().get("url").getAsString());
+                }
+            }
+
+            return emoteMap;
+        }
     }
 }
