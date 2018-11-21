@@ -130,7 +130,7 @@ public class UploadJob {
         File partDir = new File(this.channel.getChannelDirectory()
                 + this.liveStream.getLiveStreamId() + "/parts/");
 
-        if (!partDir.mkdirs()) {
+        if (!partDir.exists() && !partDir.mkdirs()) {
             throw new Exception("Could not create part directory " + partDir.getAbsolutePath());
         }
 
