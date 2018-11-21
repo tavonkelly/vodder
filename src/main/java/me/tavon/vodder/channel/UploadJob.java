@@ -177,7 +177,7 @@ public class UploadJob {
                     currFile = new File(partDir, this.liveStream.getLiveStreamId() + "-" + currPart + ".ts");
                     fileList.add(currFile);
 
-                    if (!currFile.createNewFile()) {
+                    if (!currFile.exists() && !currFile.createNewFile()) {
                         throw new Exception("could not create file " + currFile.getAbsolutePath());
                     }
 
