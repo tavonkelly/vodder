@@ -60,26 +60,26 @@ public class UploadWatcher implements Runnable {
                         UploadJob uploadJob = new UploadJob(channel, liveStream, new UploadJob.JobCallback() {
                             @Override
                             public void onProgress(int partIndex, double progress) {
-                                System.out.println(liveStream.getLiveStreamId() + " partIndex: " + partIndex
+                                Vodder.LOGGER.info(liveStream.getLiveStreamId() + " partIndex: " + partIndex
                                         + " Progress: " + (Math.round(progress * 10000D) / 100D) + "%");
                             }
 
                             @Override
                             public void onPartFinish(int partIndex, Video video) {
-                                System.out.println("---------------------------------------");
-                                System.out.println(liveStream.getLiveStreamId() + " partIndex: " + partIndex
+                                Vodder.LOGGER.info("---------------------------------------");
+                                Vodder.LOGGER.info(liveStream.getLiveStreamId() + " partIndex: " + partIndex
                                         + " finished uploading. Video Id: " + video.getId());
-                                System.out.println("---------------------------------------");
+                                Vodder.LOGGER.info("---------------------------------------");
                             }
 
                             @Override
                             public void onFinish(List<Video> videos) {
-                                System.out.println("---------------------------------------");
-                                System.out.println(liveStream.getLiveStreamId() + " finished uploading. Video Ids: ");
+                                Vodder.LOGGER.info("---------------------------------------");
+                                Vodder.LOGGER.info(liveStream.getLiveStreamId() + " finished uploading. Video Ids: ");
                                 for (Video video : videos) {
-                                    System.out.println("     - " + video.getId());
+                                    Vodder.LOGGER.info("     - " + video.getId());
                                 }
-                                System.out.println("---------------------------------------");
+                                Vodder.LOGGER.info("---------------------------------------");
 
                                 activeChannels.remove(channel.getChannelId());
                                 liveStream.setUploaded(true);

@@ -36,7 +36,7 @@ public class UploadCredential {
         File file = new File(Vodder.CHANNELS_PATH + channel.getChannelId() + "/StoredCredential");
 
         if (!file.exists() || !file.isFile()) {
-            System.out.println("Requesting YouTube channel to upload VODs for " + channel.getChannelId());
+            Vodder.LOGGER.info("Requesting YouTube channel to upload VODs for " + channel.getChannelId());
         }
 
         AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(BearerToken
