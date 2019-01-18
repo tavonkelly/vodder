@@ -5,11 +5,16 @@ import com.google.api.services.youtube.model.ChannelListResponse;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.api.services.youtube.model.SearchResult;
 import com.google.api.services.youtube.model.VideoListResponse;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.iheartradio.m3u8.Encoding;
 import com.iheartradio.m3u8.Format;
 import com.iheartradio.m3u8.ParsingMode;
 import com.iheartradio.m3u8.PlaylistParser;
 import com.iheartradio.m3u8.data.Playlist;
+import me.tavon.vodder.Vodder;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -34,7 +39,7 @@ public class YoutubeDriver implements PlatformDriver {
             "AIzaSyDueU0mfiy1MmylkhkvBd4mbTvKxNrI64I" // misc
     };
     private static int apiKeyIndex = 0;
-    private static String PLAYLIST_KEY = "hlsvp";
+    private static String PLAYLIST_KEY = "player_response";
 
     public YoutubeDriver(YouTube youtube, OkHttpClient client) {
         this.youtube = youtube;
@@ -47,12 +52,11 @@ public class YoutubeDriver implements PlatformDriver {
         String body = getVideoInfo(streamId);
 
         for (String s : body.split("&")) {
-            if (s.startsWith(PLAYLIST_KEY)) {
-                try {
-                    masterUrl = URLDecoder.decode(s.split("=")[1], "UTF-8");
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
+            if (s.startsWith(PLAYLIST_KEY + "=")) {
+                String json = URLDecoder.decode(s.split("=")[1], "UTF-8");
+                JsonObject jsonElem = new JsonParser().parse(json).getAsJsonObject();
+
+                masterUrl = jsonElem.getAsJsonObject("streamingData").get("hlsManifestUrl").getAsString();
             }
         }
 
