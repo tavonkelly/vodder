@@ -4,8 +4,9 @@ import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
 import com.google.api.client.auth.oauth2.BearerToken;
 import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.extensions.java6.auth.oauth2.AbstractPromptReceiver;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
+import com.google.api.client.googleapis.auth.oauth2.GoogleOAuthConstants;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
@@ -51,8 +52,12 @@ public class UploadCredential {
                 "https://www.googleapis.com/auth/youtubepartner"))
                 .setDataStoreFactory(new FileDataStoreFactory(file.getParentFile()))
                 .build();
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setHost(
-                ChannelAuthConstants.DOMAIN).setPort(ChannelAuthConstants.PORT).build();
+        AbstractPromptReceiver receiver = new AbstractPromptReceiver() {
+            @Override
+            public String getRedirectUri() {
+                return GoogleOAuthConstants.OOB_REDIRECT_URI;
+            }
+        };
         Credential credential = new AuthorizationCodeInstalledApp(flow, receiver).authorize(channel.getChannelId());
 
         return new UploadCredential(credential);
