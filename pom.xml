@@ -63,21 +63,21 @@
             <artifactId>google-oauth-client-jetty</artifactId>
             <version>1.23.0</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.apache.xmlgraphics</groupId>-->
-            <!--<artifactId>batik-transcoder</artifactId>-->
-            <!--<version>1.9.1</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>org.apache.xmlgraphics</groupId>-->
-            <!--<artifactId>batik-codec</artifactId>-->
-            <!--<version>1.9</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>xuggle</groupId>-->
-            <!--<artifactId>xuggle-xuggler</artifactId>-->
-            <!--<version>5.4</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-transcoder</artifactId>
+            <version>1.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-codec</artifactId>
+            <version>1.9</version>
+        </dependency>
+        <dependency>
+            <groupId>xuggle</groupId>
+            <artifactId>xuggle-xuggler</artifactId>
+            <version>5.4</version>
+        </dependency>
     </dependencies>
 
     <build>

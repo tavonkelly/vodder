@@ -16,6 +16,7 @@ import me.tavon.vodder.driver.chat.emote.BttvEmoteRegistry;
 import me.tavon.vodder.driver.chat.emote.EmoteRegistry;
 import me.tavon.vodder.driver.chat.emote.FrankerFaceZEmoteRegistry;
 import me.tavon.vodder.driver.chat.emote.TwitchEmoteRegistry;
+import me.tavon.vodder.encoding.ChatEncoder;
 import me.tavon.vodder.stream.LiveStream;
 import me.tavon.vodder.stream.Segment;
 import me.tavon.vodder.stream.StreamWatcher;
@@ -61,7 +62,8 @@ public class Vodder {
         List<EmoteRegistry> emoteRegistries = new ArrayList<>(Arrays.asList(
                 new TwitchEmoteRegistry(cacheFolder, httpClient),
                 new FrankerFaceZEmoteRegistry(cacheFolder, httpClient),
-                new BttvEmoteRegistry(cacheFolder, httpClient)));
+                new BttvEmoteRegistry(cacheFolder, httpClient)
+        ));
 
         for (int i = 0; i < emoteRegistries.size(); i++) {
             EmoteRegistry emoteRegistry = emoteRegistries.get(i);
@@ -114,21 +116,21 @@ public class Vodder {
 
         LOGGER.info("Loaded " + channelMap.size() + " channel(s)");
 
-//        for (Channel channel : channelMap.values()) {
-//            LiveStream liveStream = channel.getLiveStreams().get(0);
-//            File liveStreamDir = new File(channel.getChannelDirectory()
-//                    + liveStream.getLiveStreamId() + "/" + liveStream.getLiveStreamId() + ".ts");
-//            ChatEncoder chatEncoder = new ChatEncoder(liveStream, liveStreamDir, httpClient);
-//
-//            try {
-//                chatEncoder.start();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            System.out.println("done");
-//        }
+        for (Channel channel : channelMap.values()) {
+            LiveStream liveStream = channel.getLiveStreams().get(0);
+            File liveStreamDir = new File(channel.getChannelDirectory()
+                    + liveStream.getLiveStreamId() + "/" + liveStream.getLiveStreamId() + ".ts");
+            ChatEncoder chatEncoder = new ChatEncoder(liveStream, liveStreamDir, httpClient);
 
-        streamWatcher = new StreamWatcher(this);
+            try {
+                chatEncoder.xstart();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("done");
+        }
+
+//        streamWatcher = new StreamWatcher(this);
         new UploadWatcher();
 
         TimerTask saveTask = new TimerTask() {
@@ -148,27 +150,27 @@ public class Vodder {
         new Timer("SaveTimer").schedule(saveTask,
                 TimeUnit.SECONDS.toMillis(30), TimeUnit.MINUTES.toMillis(5));
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.info("Shutting down...");
-
-            try {
-                streamWatcher.shutdown();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            for (Channel channel : this.getChannels()) {
-                for (LiveStream liveStream : channel.getActiveLiveStreams()) {
-                    for (Segment segment : liveStream.getSegments()) {
-                        if (!segment.isDownloaded()) {
-                            segment.setQueued(false);
-                        }
-                    }
-                }
-            }
-
-            saveTask.run();
-        }));
+//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//            LOGGER.info("Shutting down...");
+//
+//            try {
+//                streamWatcher.shutdown();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+//            for (Channel channel : this.getChannels()) {
+//                for (LiveStream liveStream : channel.getActiveLiveStreams()) {
+//                    for (Segment segment : liveStream.getSegments()) {
+//                        if (!segment.isDownloaded()) {
+//                            segment.setQueued(false);
+//                        }
+//                    }
+//                }
+//            }
+//
+//            saveTask.run();
+//        }));
     }
 
     public List<Channel> getChannels() {

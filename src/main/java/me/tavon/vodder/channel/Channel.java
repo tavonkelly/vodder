@@ -109,7 +109,7 @@ public class Channel {
                 }
 
                 if (liveStream.isActive()) {
-//                    platformChatDriver.onLiveStreamIngestStart(liveStream, liveStream.getChatIngest()); // TODO Test
+                    platformChatDriver.onLiveStreamIngestStart(liveStream, liveStream.getChatIngest()); // TODO Test
                 }
 
                 this.liveStreams.add(liveStream);

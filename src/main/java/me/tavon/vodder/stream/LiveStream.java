@@ -108,6 +108,31 @@ public class LiveStream {
         return totalLength;
     }
 
+    public List<Map.Entry<Segment, Map.Entry<Double, Double>>> getSegmentBreaks() {
+        List<Map.Entry<Segment, Map.Entry<Double, Double>>> result = new LinkedList<>();
+
+        double timeIndex = this.startTime / 1000D;
+        Segment lastSegment = null;
+
+        for (Segment segment : this.segments) {
+            if (lastSegment == null && segment.getIndex() != 0) {
+                timeIndex += segment.getLength() * segment.getIndex();
+            } else if (lastSegment != null && segment.getIndex() != lastSegment.getIndex() + 1) {
+                timeIndex += (segment.getIndex() - lastSegment.getIndex() - 1) * lastSegment.getLength();
+            }
+
+            Map.Entry<Double, Double> timeRange =
+                    new AbstractMap.SimpleEntry<>(timeIndex, timeIndex + segment.getLength());
+            Map.Entry<Segment, Map.Entry<Double, Double>> entry = new AbstractMap.SimpleEntry<>(segment, timeRange);
+
+            result.add(entry);
+            timeIndex += segment.getLength();
+            lastSegment = segment;
+        }
+
+        return result;
+    }
+
     public ChatIngest getChatIngest() {
         return chatIngest;
     }
@@ -127,12 +152,12 @@ public class LiveStream {
 
         if (!active && this.active) {
             this.readyForUpload = true;
-//            chatDriver.onLiveStreamIngestFinish(this); // TODO Test
+            chatDriver.onLiveStreamIngestFinish(this); // TODO Test
         }
 
         if (active && !this.active) {
             this.readyForUpload = false;
-//            chatDriver.onLiveStreamIngestStart(this, this.chatIngest); // TODO Test
+            chatDriver.onLiveStreamIngestStart(this, this.chatIngest); // TODO Test
         }
 
         this.active = active;

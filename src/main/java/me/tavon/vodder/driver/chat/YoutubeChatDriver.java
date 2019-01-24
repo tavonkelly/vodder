@@ -76,7 +76,7 @@ public class YoutubeChatDriver extends PlatformChatDriver {
 
             String continuation = initialData.getAsJsonObject("contents").getAsJsonObject("liveChatRenderer")
                     .getAsJsonArray("continuations").get(0).getAsJsonObject()
-                    .getAsJsonObject("invalidationContinuationData").get("continuation").getAsString();
+                    .getAsJsonObject("timedContinuationData").get("continuation").getAsString();
             String chatApiKey = bodyString.split(Pattern.quote("INNERTUBE_API_KEY\":\""))[1]
                     .split(Pattern.quote("\""))[0];
 

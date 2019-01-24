@@ -14,8 +14,8 @@ public abstract class PlatformChatDriver {
         this.emoteRegistries = emoteRegistries;
     }
 
-    abstract void onLiveStreamIngestStart(LiveStream liveStream, ChatIngest chatIngest) throws Exception;
+    public abstract void onLiveStreamIngestStart(LiveStream liveStream, ChatIngest chatIngest) throws Exception;
 
-    abstract void onLiveStreamIngestFinish(LiveStream liveStream) throws Exception;
+    public abstract void onLiveStreamIngestFinish(LiveStream liveStream) throws Exception;
 
 }

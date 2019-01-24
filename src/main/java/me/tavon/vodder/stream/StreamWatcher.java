@@ -34,7 +34,8 @@ public class StreamWatcher implements Runnable {
 
     private static final long LIVE_CHECK_SLEEP_TIME = TimeUnit.MINUTES.toMillis(5);
     private static final long DOWNLOAD_SLEEP_TIME = TimeUnit.SECONDS.toMillis(10);
-    private static final long PAST_SEG_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
+//    private static final long PAST_SEG_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
+    private static final long PAST_SEG_THRESHOLD = TimeUnit.MINUTES.toMillis(1);;
     private static final long TITLE_CHECK_SLEEP_TIME = TimeUnit.MINUTES.toMillis(5);
     private static final long ACTIVE_LIVE_TIMEOUT = TimeUnit.MINUTES.toMillis(5);
 
@@ -126,6 +127,7 @@ public class StreamWatcher implements Runnable {
                     channel.createLiveStream(s, streamTitle, startTime, true);
                     Vodder.LOGGER.info("Created livestream " + s + " for " + channel.getChannelId());
                 } catch (Exception e) {
+                    e.printStackTrace();
                     Vodder.LOGGER.warning("Could not create livestream " + s + ": " + e.getMessage());
                 }
             }
@@ -235,7 +237,8 @@ public class StreamWatcher implements Runnable {
                 ExecutorService threadPool;
 
                 if (liveStream.getStartTime() + lengthSoFar <= System.currentTimeMillis() - PAST_SEG_THRESHOLD) {
-                    threadPool = pastSegThreadPool;
+//                    threadPool = pastSegThreadPool;
+                    threadPool = null;
                 } else {
                     threadPool = currSegThreadPool;
                 }
@@ -246,8 +249,10 @@ public class StreamWatcher implements Runnable {
                     uri = playlistUri.substring(0, playlistUri.lastIndexOf("/") + 1) + uri;
                 }
 
-                threadPool.submit(new DownloadTask(vodder.getHttpClient(), liveStream, segment, uri
-                        , new File(liveStream.getFileDirectory() + currSeq + ".ts")));
+                if (threadPool != null) {
+                    threadPool.submit(new DownloadTask(vodder.getHttpClient(), liveStream, segment, uri
+                            , new File(liveStream.getFileDirectory() + currSeq + ".ts")));
+                }
                 segCount++;
                 currSeq++;
             }
