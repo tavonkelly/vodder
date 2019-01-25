@@ -1,9 +1,6 @@
 package me.tavon.vodder.stream;
 
-import com.iheartradio.m3u8.Encoding;
-import com.iheartradio.m3u8.Format;
-import com.iheartradio.m3u8.ParsingMode;
-import com.iheartradio.m3u8.PlaylistParser;
+import com.iheartradio.m3u8.*;
 import com.iheartradio.m3u8.data.Playlist;
 import com.iheartradio.m3u8.data.TrackData;
 import me.tavon.vodder.Vodder;
@@ -12,13 +9,16 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-import java.io.File;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StreamWatcher implements Runnable {
 
@@ -37,6 +37,7 @@ public class StreamWatcher implements Runnable {
     private static final long PAST_SEG_THRESHOLD = TimeUnit.MINUTES.toMillis(5);
     private static final long TITLE_CHECK_SLEEP_TIME = TimeUnit.MINUTES.toMillis(5);
     private static final long ACTIVE_LIVE_TIMEOUT = TimeUnit.MINUTES.toMillis(5);
+    private static final Pattern ISO_MILLIS_PATTERN = Pattern.compile("(\\.[0-9]+)");
 
     public StreamWatcher(Vodder vodder) {
         this.vodder = vodder;
@@ -207,7 +208,36 @@ public class StreamWatcher implements Runnable {
             throw new Exception("Could not load response body");
         }
 
-        PlaylistParser parser = new PlaylistParser(responseBody.byteStream(), Format.EXT_M3U, Encoding.UTF_8, ParsingMode.LENIENT);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
+        Scanner scanner = new Scanner(responseBody.byteStream());
+
+        while (scanner.hasNextLine()) {
+            String part = scanner.nextLine();
+
+            if (!part.startsWith("#EXT-X-PROGRAM-DATE-TIME:")) {
+                dataOutputStream.writeBytes(part + "\n");
+                continue;
+            }
+
+            Matcher matcher = ISO_MILLIS_PATTERN.matcher(part);
+
+            if (!matcher.find()) {
+                dataOutputStream.writeBytes(part + "\n");
+                continue;
+            }
+
+            String group = matcher.group();
+
+            while (group.length() != 4) {
+                group = group.substring(0, 1) + "0" + group.substring(1);
+            }
+
+            dataOutputStream.writeBytes(matcher.replaceFirst(group) + "\n");
+        }
+
+        PlaylistParser parser = new PlaylistParser(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()),
+                Format.EXT_M3U, Encoding.UTF_8, ParsingMode.LENIENT);
         Playlist playlist = parser.parse();
 
         response.close();
