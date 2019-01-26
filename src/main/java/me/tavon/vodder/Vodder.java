@@ -60,9 +60,9 @@ public class Vodder {
         cacheFolder.mkdirs();
 
         List<EmoteRegistry> emoteRegistries = new ArrayList<>(Arrays.asList(
-                new TwitchEmoteRegistry(cacheFolder, httpClient),
-                new FrankerFaceZEmoteRegistry(cacheFolder, httpClient),
-                new BttvEmoteRegistry(cacheFolder, httpClient)
+//                new TwitchEmoteRegistry(cacheFolder, httpClient),
+//                new FrankerFaceZEmoteRegistry(cacheFolder, httpClient),
+//                new BttvEmoteRegistry(cacheFolder, httpClient)
         ));
 
         for (int i = 0; i < emoteRegistries.size(); i++) {

@@ -83,10 +83,10 @@ public class YoutubeDriver implements PlatformDriver {
 
         Playlist playlist = parser.parse();
 
-//        return playlist.getMasterPlaylist().getPlaylists()
-//                .get(playlist.getMasterPlaylist().getPlaylists().size() - 1).getUri();
         return playlist.getMasterPlaylist().getPlaylists()
-                .get(0).getUri();
+                .get(playlist.getMasterPlaylist().getPlaylists().size() - 1).getUri();
+//        return playlist.getMasterPlaylist().getPlaylists()
+//                .get(0).getUri();
     }
 
     @Override

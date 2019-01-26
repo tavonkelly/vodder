@@ -1,5 +1,6 @@
 package me.tavon.vodder.encoding;
 
+import com.google.common.base.Joiner;
 import me.tavon.vodder.stream.LiveStream;
 import me.tavon.vodder.stream.Segment;
 import me.tavon.vodder.stream.chat.ChatMessage;
@@ -11,8 +12,12 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChatEncoder {
+
+//    ffmpeg -i dcfyX9q7Yc8.ts -i dcfyX9q7Yc8_chat.mp4 -filter_complex "scale=w=1560:h=-1[sc];[sc]pad=width=1560:height=1080:y=(oh-ih)/2[sc];[sc][1]hstack" -c:v libx264 -crf 18 hello_9.ts
 
     private LiveStream liveStream;
     private File preChatCombinedFile;
@@ -42,10 +47,12 @@ public class ChatEncoder {
 
         this.liveStream.lockSegments();
 
+        Map.Entry<Integer, Integer> dimensions = this.getFileDimensions(this.preChatCombinedFile);
         int outputFps = getFileFps(this.preChatCombinedFile);
         System.out.println("outputFPS = " + outputFps);
-        int width = (int) scale(IMAGE_WIDTH);
-        int height = (int) scale(IMAGE_HEIGHT);
+        int width = (int) Math.round(((double) IMAGE_WIDTH / (double) IMAGE_HEIGHT) * (double) dimensions.getValue());
+        int height = dimensions.getValue();
+        System.out.println("width=" + width + " height=" + height);
 
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = image.createGraphics();
@@ -60,7 +67,7 @@ public class ChatEncoder {
         graphics.setRenderingHint(
                 RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
-        graphics.setFont(new Font("Arial", Font.PLAIN, (int) scale(13)));
+        graphics.setFont(new Font("Arial", Font.PLAIN, width / 15));
         graphics.setBackground(new Color(0.25f, 0.25f, 0.25f, 0.5f));
         graphics.clearRect(0, 0, width, height);
 
@@ -75,7 +82,9 @@ public class ChatEncoder {
 
         try {
 //                , "-vcodec", "mpeg4"
-            process = Runtime.getRuntime().exec(new String[]{"ffmpeg", "-y", "-f", "image2pipe", "-framerate", String.valueOf(X_CHAT_FPS), "-i", "-", "-vcodec", "libx264", "-r", String.valueOf(outputFps), outFile.getAbsolutePath()});
+            process = Runtime.getRuntime().exec("ffmpeg -y -f image2pipe -framerate " +
+                    String.valueOf(X_CHAT_FPS) + " -i - -c:v libx264 -r " + String.valueOf(1) + " " +
+                    outFile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -148,6 +157,7 @@ public class ChatEncoder {
 
                 if (count == 0) {
                     ImageIO.write(image, "png", out);
+                    System.out.println((double) i / (X_CHAT_FPS * (Math.round(streamLength))));
                     frameTime += 1D / X_CHAT_FPS;
                     continue;
                 }
@@ -155,8 +165,8 @@ public class ChatEncoder {
                 pastMessages.sort(Comparator.comparingInt(a -> (int) a.getTimestamp()));
                 graphics.clearRect(0, 0, width, height);
 
-                int messagePadding = 8;
-                int heightLeft = height - 5;
+                int messagePadding = width / 45;
+                int heightLeft = height - (width / 72);
 
                 for (int x = pastMessages.size() - 1; x >= 0; x--) {
                     ChatMessage chatMessage = pastMessages.get(x);
@@ -166,17 +176,48 @@ public class ChatEncoder {
                         continue;
                     }
 
-                    int msgWidth = width - (int) scale(20);
+                    int msgWidth = width - (width / 18);
                     int msgHeight = chatMessage.getPaintHeight(imageCache, fontMetrics, msgWidth);
 
-                    chatMessage.paint(imageCache, fontMetrics, (int) scale(10), heightLeft - msgHeight, msgWidth, graphics);
+                    chatMessage.paint(imageCache, fontMetrics, width / 36, heightLeft - msgHeight, msgWidth, graphics);
                     heightLeft -= msgHeight + messagePadding;
                 }
 
                 ImageIO.write(image, "png", out);
-                System.out.println((double) i / (X_CHAT_FPS * (Math.round(streamLength))));
+                System.out.println((double) i / (X_CHAT_FPS * (Math.round(streamLength))) + " (data)");
 
                 frameTime += 1D / X_CHAT_FPS;
+            }
+        }
+
+        Thread.sleep(3000);
+
+        combineVodChat(outFile);
+    }
+
+    private void combineVodChat(File chatFile) throws IOException {
+        Map.Entry<Integer, Integer> vodDim = this.getFileDimensions(this.preChatCombinedFile);
+        Map.Entry<Integer, Integer> chatDim = this.getFileDimensions(chatFile);
+        Process process;
+
+        System.out.println("ffmpeg -y -i " + this.preChatCombinedFile.getAbsolutePath() + " -i "
+                + chatFile.getAbsolutePath() + " -filter_complex scale=w=" + (vodDim.getKey() - chatDim.getKey()) + ":h=-1[sc];[sc]" +
+                "pad=width=" + (vodDim.getKey() - chatDim.getKey()) + ":height=" + vodDim.getValue() +
+                ":y=(oh-ih)/2[sc];[sc][1]hstack -c:v libx264 -crf 18 "
+                + this.liveStream.getLiveStreamId() + "_combined.ts");
+
+        process = Runtime.getRuntime().exec("ffmpeg -y -i " + this.preChatCombinedFile.getAbsolutePath() + " -i "
+                + chatFile + " -filter_complex scale=w=" + (vodDim.getKey() - chatDim.getKey()) + ":h=-1[sc];[sc]" +
+                "pad=width=" + (vodDim.getKey() - chatDim.getKey()) + ":height=" + vodDim.getValue() +
+                ":y=(oh-ih)/2[sc];[sc][1]hstack -pix_fmt yuv420p -preset fast -c:v libx264 -crf 18 -c:a aac -movflags +faststart "
+                + new File(chatFile.getParentFile(), this.liveStream.getLiveStreamId() + "_combined.mp4"));
+
+
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            String s;
+            while ((s = reader.readLine()) != null) {
+                System.out.println(s);
             }
         }
     }
@@ -272,10 +313,6 @@ public class ChatEncoder {
                 System.out.println("totalFrames=" + (FRAMES_PER_SECOND * (totalLength / 1000L)));
 
                 for (int frame = indexFrame; frame < FRAMES_PER_SECOND * (totalLength / 1000L); frame++) {
-                    if (frame == 61410) {
-                        int i = 0;
-                    }
-
                     System.out.println(frame + " - " + (double) frame / (FRAMES_PER_SECOND * (totalLength / 1000L)));
                     long frameStart = this.liveStream.getStartTime() + (frame * perFrame) + 75000L; // 75 seconds to counteract the delay
                     long frameEnd = frameStart + perFrame;
@@ -349,6 +386,33 @@ public class ChatEncoder {
             String firstSec = fullText.split(" fps")[0];
 
             return Integer.parseInt(firstSec.substring(firstSec.length() - 2, firstSec.length()));
+        }
+    }
+
+    private Map.Entry<Integer, Integer> getFileDimensions(File file) throws IOException {
+        System.out.println("getFileDimensions " + file.getAbsolutePath());
+        Process process = Runtime.getRuntime().exec("ffmpeg -i " + file.getAbsolutePath());
+        Pattern pattern = Pattern.compile(" (\\b[^0]\\d+x[^0]\\d+\\b)");
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                Matcher matcher = pattern.matcher(line);
+
+                if (!matcher.find()) {
+                    continue;
+                }
+
+                line = matcher.group().trim();
+
+                if (line.contains("x")) {
+                    return new AbstractMap.SimpleEntry<>(Integer.parseInt(line.split("x")[0]),
+                            Integer.parseInt(line.split("x")[1]));
+                }
+            }
+
+            throw new RuntimeException("could not find file dimensions");
         }
     }
 
