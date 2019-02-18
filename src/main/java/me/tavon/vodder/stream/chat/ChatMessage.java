@@ -48,14 +48,14 @@ public class ChatMessage implements Serializable {
     }
 
     public int getPaintHeight(ImageCache imageCache, FontMetrics fontMetrics, int width) {
-        return wrapData(messageRunsToArr(this.messageRuns, imageCache), fontMetrics, width).size() * fontMetrics.getHeight();
+        return wrapData(messageRunsToArr(imageCache), fontMetrics, width).size() * fontMetrics.getHeight();
     }
 
     // TODO https://stackoverflow.com/questions/22240328/how-to-draw-a-gif-animation-in-java/22240487#
     // TODO https://www.mail-archive.com/batik-users@xml.apache.org/msg00775.html
     public void paint(ImageCache imageCache, FontMetrics fontMetrics, int xOrigin, int yOrigin, int width, Graphics2D graphics2D) {
         graphics2D.setColor(Color.WHITE);
-        List<Object[]> lines = wrapData(messageRunsToArr(this.messageRuns, imageCache), fontMetrics, width);
+        List<Object[]> lines = wrapData(messageRunsToArr(imageCache), fontMetrics, width);
         int newOrigin;
 
 //        graphics2D.
@@ -63,17 +63,45 @@ public class ChatMessage implements Serializable {
         for (int i = 0; i < lines.size(); i++) {
             char buffer[] = new char[lines.get(i).length];
             int bufferLen = 0;
+            Color lastColor = null;
             newOrigin = xOrigin;
 
-            for (Object o : lines.get(i)) {
-                if (o instanceof Character) {
-                    buffer[bufferLen++] = (Character) o;
+            boolean dumpBuffer = false;
+
+            for (int x = 0; x < lines.get(i).length; x++) {
+                if (dumpBuffer) {
+                    String s = new String(buffer, 0, bufferLen);
+                    Color oldColor = graphics2D.getColor();
+
+                    if (lastColor != null) {
+                        graphics2D.setColor(lastColor);
+                        lastColor = null;
+                    }
+
+                    graphics2D.drawString(s, newOrigin, yOrigin + ((i + 1) * fontMetrics.getHeight()));
+                    graphics2D.setColor(oldColor);
+                    newOrigin += fontMetrics.stringWidth(s);
+                    bufferLen = 0;
+                }
+
+                Object o = lines.get(i)[x];
+
+                if (o instanceof ColoredCharacter) {
+                    ColoredCharacter c = (ColoredCharacter) o;
+
+                    if (lastColor != null && lastColor != c.color) {
+                        dumpBuffer = true;
+                        x--;
+                        continue;
+                    }
+
+                    buffer[bufferLen++] = c.character;
+                    lastColor = c.color;
                 } else if (o instanceof BufferedImage) {
                     if (bufferLen != 0) {
-                        String s = new String(buffer, 0, bufferLen);
-                        graphics2D.drawString(s, newOrigin, yOrigin + ((i + 1) * fontMetrics.getHeight()));
-                        newOrigin += fontMetrics.stringWidth(s);
-                        bufferLen = 0;
+                        dumpBuffer = true;
+                        x--;
+                        continue;
                     }
 
                     graphics2D.drawImage((BufferedImage) o, null, newOrigin, yOrigin + (i * fontMetrics.getHeight()));
@@ -84,28 +112,37 @@ public class ChatMessage implements Serializable {
 
             if (bufferLen != 0) {
                 String s = new String(buffer, 0, bufferLen);
+                Color oldColor = graphics2D.getColor();
+
+                if (lastColor != null) {
+                    graphics2D.setColor(lastColor);
+                }
                 graphics2D.drawString(s, newOrigin, yOrigin + ((i + 1) * fontMetrics.getHeight()));
+                graphics2D.setColor(oldColor);
             }
         }
     }
 
-    private Object[] messageRunsToArr(List<ChatRun> chatRuns, ImageCache imageCache) {
+    private Object[] messageRunsToArr(ImageCache imageCache) {
         List<Object> objects = new ArrayList<>();
 
+        Color color = colorFromString(this.sender);
+
         for (char c : this.sender.toCharArray()) {
-            objects.add(c);
+            objects.add(new ColoredCharacter(color, c));
         }
 
-        objects.addAll(Arrays.asList(':', ' '));
+        objects.addAll(Arrays.asList(new ColoredCharacter(Color.WHITE, ':'),
+                new ColoredCharacter(Color.WHITE, ' ')));
 
-        for (ChatRun chatRun : chatRuns) {
+        for (ChatRun chatRun : this.messageRuns) {
             if (chatRun.type == ChatRunType.TEXT) {
                 for (char c : chatRun.data.toCharArray()) {
                     if (c == '\uFEFF') {
                         continue;
                     }
 
-                    objects.add(c);
+                    objects.add(new ColoredCharacter(Color.WHITE, c));
                 }
             } else if (chatRun.type == ChatRunType.ICON) {
                 try {
@@ -117,6 +154,39 @@ public class ChatMessage implements Serializable {
         }
 
         return objects.toArray(new Object[objects.size()]);
+    }
+
+    private Color colorFromString(String s) {
+        double hashU;
+        double hashV;
+
+        hashU = s.hashCode() + ((double) Integer.MIN_VALUE * -1D);
+
+        char[] chars = s.toCharArray();
+
+        for (char c = 0; c < chars.length / 2; c++) {
+            char x = chars[c];
+            chars[c] = chars[chars.length - 1 - c];
+            chars[chars.length - 1 - c] = x;
+        }
+
+        hashV = new String(chars).hashCode() + ((double) Integer.MIN_VALUE * -1D);
+
+        double randoU = hashU / (Integer.MAX_VALUE + ((double) Integer.MIN_VALUE * -1D));
+        double randoV = hashV / (Integer.MAX_VALUE + ((double) Integer.MIN_VALUE * -1D));
+        double y = 0.75D;
+        double u = randoU - 0.5D;
+        double v = randoV - 0.5D;
+
+        double rTmp = y + (1.403 * v);
+        double gTmp = y - (0.344 * u) - (0.714 * v);
+        double bTmp = y + (1.770 * u);
+
+        int r = (int) Math.round(Math.min(255, Math.max(0, rTmp * 255)));
+        int g = (int) Math.round(Math.min(255, Math.max(0, gTmp * 255)));
+        int b = (int) Math.round(Math.min(255, Math.max(0, bTmp * 255)));
+
+        return new Color(r, g, b);
     }
 
     private List<Object[]> wrapData(Object[] data, FontMetrics fontMetrics, int width) {
@@ -147,8 +217,8 @@ public class ChatMessage implements Serializable {
         int length = 0;
 
         for (Object anInput : input) {
-            if (anInput instanceof Character) {
-                length += fontMetrics.charWidth((Character) anInput);
+            if (anInput instanceof ColoredCharacter) {
+                length += fontMetrics.charWidth(((ColoredCharacter) anInput).character);
             } else if (anInput instanceof BufferedImage) {
                 length += ((BufferedImage) anInput).getWidth();
             }
@@ -191,14 +261,6 @@ public class ChatMessage implements Serializable {
         public void setData(String data) {
             this.data = data;
         }
-
-        @Override
-        public String toString() {
-            return "ChatRun{" +
-                    "type=" + type +
-                    ", data='" + toPrintableRepresentation(data) + '\'' +
-                    '}';
-        }
     }
 
     public enum ChatRunType {
@@ -206,69 +268,13 @@ public class ChatMessage implements Serializable {
         TEXT,
     }
 
-    private static final char CONTROL_LIMIT = ' ';
-    private static final char PRINTABLE_LIMIT = '\u007e';
-    private static final char[] HEX_DIGITS = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    private class ColoredCharacter {
+        private Color color;
+        private Character character;
 
-    public static String toPrintableRepresentation(String source) {
-
-        if (source == null) return null;
-        else {
-
-            final StringBuilder sb = new StringBuilder();
-            final int limit = source.length();
-            char[] hexbuf = null;
-
-            int pointer = 0;
-
-            sb.append('"');
-
-            while (pointer < limit) {
-
-                int ch = source.charAt(pointer++);
-
-                switch (ch) {
-
-                    case '\0':
-                        sb.append("\\0");
-                        break;
-                    case '\t':
-                        sb.append("\\t");
-                        break;
-                    case '\n':
-                        sb.append("\\n");
-                        break;
-                    case '\r':
-                        sb.append("\\r");
-                        break;
-                    case '\"':
-                        sb.append("\\\"");
-                        break;
-                    case '\\':
-                        sb.append("\\\\");
-                        break;
-
-                    default:
-                        if (CONTROL_LIMIT <= ch && ch <= PRINTABLE_LIMIT) sb.append((char) ch);
-                        else {
-
-                            sb.append("\\u");
-
-                            if (hexbuf == null)
-                                hexbuf = new char[4];
-
-                            for (int offs = 4; offs > 0; ) {
-
-                                hexbuf[--offs] = HEX_DIGITS[ch & 0xf];
-                                ch >>>= 4;
-                            }
-
-                            sb.append(hexbuf, 0, 4);
-                        }
-                }
-            }
-
-            return sb.append('"').toString();
+        public ColoredCharacter(Color color, Character character) {
+            this.color = color;
+            this.character = character;
         }
     }
 }

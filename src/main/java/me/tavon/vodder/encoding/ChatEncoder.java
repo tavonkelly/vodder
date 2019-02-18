@@ -23,7 +23,7 @@ public class ChatEncoder {
     private static final int IMAGE_WIDTH = 360;
     private static final int IMAGE_HEIGHT = 1080;
 
-    private static final int X_CHAT_FPS = 1;
+    private static final int X_CHAT_FPS = 10;
 
     public ChatEncoder(LiveStream liveStream, File preChatCombinedFile, OkHttpClient httpClient) {
         this.liveStream = liveStream;
@@ -77,7 +77,7 @@ public class ChatEncoder {
 
         try {
             process = Runtime.getRuntime().exec("ffmpeg -y -f image2pipe -framerate " +
-                    String.valueOf(X_CHAT_FPS) + " -i - -c:v libx264 -r " + String.valueOf(1) + " " +
+                    String.valueOf(X_CHAT_FPS) + " -i - -c:v libx264 -r " + String.valueOf(outputFps) + " " +
                     outFile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
@@ -184,9 +184,9 @@ public class ChatEncoder {
             }
         }
 
-        Thread.sleep(3000);
-
-        combineVodChat(outFile);
+//        Thread.sleep(3000);
+//
+//        combineVodChat(outFile);
     }
 
     private void combineVodChat(File chatFile) throws IOException {
